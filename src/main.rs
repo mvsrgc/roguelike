@@ -58,12 +58,15 @@ fn main() -> rltk::BError {
     game_state.ecs.register::<Position>();
     game_state.ecs.register::<Player>();
     game_state.ecs.register::<Renderable>();
-    game_state.ecs.insert(new_map());
+    let (rooms, map) = new_map_rooms_and_corridors();
+    game_state.ecs.insert(map);
+
+    let (player_x, player_y) = rooms[0].center();
 
     game_state
         .ecs
         .create_entity()
-        .with(Position { x: 30, y: 30 })
+        .with(Position { x: player_x, y: player_y })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::RED),
