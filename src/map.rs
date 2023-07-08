@@ -1,8 +1,8 @@
 use std::cmp::{max, min};
 
-use crate::Rect;
-use rltk::{RandomNumberGenerator, Rltk, RGB};
-use specs::World;
+use crate::{Player, Rect, Viewshed};
+use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
+use specs::{Join, World, WorldExt};
 
 use super::{MAP_HEIGHT, MAP_WIDTH};
 
@@ -17,6 +17,19 @@ pub struct Map {
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
+    pub revealed_tiles: Vec<bool>,
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx as usize] == TileType::Wall
+    }
+}
+
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
 }
 
 impl Map {
@@ -54,9 +67,10 @@ impl Map {
     pub fn new_map_rooms_and_corridors() -> Self {
         let mut map = Map {
             tiles: vec![TileType::Wall; MAP_WIDTH as usize * MAP_HEIGHT as usize],
+            revealed_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             rooms: Vec::new(),
             width: MAP_WIDTH,
-            height: MAP_HEIGHT
+            height: MAP_HEIGHT,
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -82,6 +96,11 @@ impl Map {
             if ok {
                 map.apply_room_to_map(&new_room);
 
+                // 50% chance to make a vertical tunnel first and then a 
+                // horizontal tunnel or vice-versa. This is because
+                // if you have two squares that are distant from each other
+                // you have two ways of connecting them (both ways form an L shape).
+                // The randomness makes it less repetitive.
                 if !map.rooms.is_empty() {
                     let (new_x, new_y) = new_room.center();
                     let (prev_x, prev_y) = map.rooms[map.rooms.len() - 1].center();
@@ -104,36 +123,46 @@ impl Map {
     }
 
     pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
-        let mut x = 0;
-        let mut y = 0;
-
+        let mut players = ecs.write_storage::<Player>();
+        let mut viewsheds = ecs.write_storage::<Viewshed>();
         let map = ecs.fetch::<Map>();
 
-        for tile in map.tiles.iter() {
-            match tile {
-                TileType::Floor => {
-                    ctx.set(
-                        x,
-                        y,
-                        RGB::from_f32(0.5, 0.5, 0.5),
-                        RGB::from_f32(0., 0., 0.),
-                        rltk::to_cp437('.'),
-                    );
+        for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
+            let mut x = 0;
+            let mut y = 0;
+
+            // Use enumerate to get the index of each tile,
+            // the tile index allows us to find if that tile
+            // is True in map.revealed_tiles (since map.revealed_tiles[0]
+            // maps to map.tiles[0])
+            for (index, tile) in map.tiles.iter().enumerate() {
+                if map.revealed_tiles[index] {
+                    match tile {
+                        TileType::Floor => {
+                            ctx.set(
+                                x,
+                                y,
+                                RGB::from_f32(0.5, 0.5, 0.5),
+                                RGB::from_f32(0., 0., 0.),
+                                rltk::to_cp437('.'),
+                            );
+                        }
+                        TileType::Wall => {
+                            ctx.set(
+                                x,
+                                y,
+                                RGB::from_f32(0.0, 1.0, 0.0),
+                                RGB::from_f32(0., 0., 0.),
+                                rltk::to_cp437('#'),
+                            );
+                        }
+                    }
                 }
-                TileType::Wall => {
-                    ctx.set(
-                        x,
-                        y,
-                        RGB::from_f32(0.0, 1.0, 0.0),
-                        RGB::from_f32(0., 0., 0.),
-                        rltk::to_cp437('#'),
-                    );
+                x += 1;
+                if x > MAP_WIDTH - 1 {
+                    x = 0;
+                    y += 1;
                 }
-            }
-            x += 1;
-            if x > MAP_WIDTH - 1 {
-                x = 0;
-                y += 1;
             }
         }
     }
