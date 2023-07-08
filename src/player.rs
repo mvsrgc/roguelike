@@ -1,4 +1,4 @@
-use crate::Map;
+use crate::{Map, Viewshed};
 
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{Rltk, VirtualKeyCode};
@@ -8,13 +8,16 @@ use std::cmp::{max, min};
 pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
     let mut positions = gs.ecs.write_storage::<Position>();
     let mut players = gs.ecs.write_storage::<Player>();
+    let mut viewsheds = gs.ecs.write_storage::<Viewshed>();
     let map = gs.ecs.fetch::<Map>();
 
-    for (_player, pos) in (&mut players, &mut positions).join() {
+    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_index = map.map_index(pos.x + delta_x, pos.y + delta_y);
         if map.tiles[destination_index] != TileType::Wall || gs.god_mode {
             pos.x = min(MAP_WIDTH - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_HEIGHT - 1, max(0, pos.y + delta_y));
+
+            viewshed.dirty = true;
         }
     }
 }

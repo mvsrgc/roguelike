@@ -18,6 +18,7 @@ pub struct Map {
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
+    pub visible_tiles: Vec<bool>
 }
 
 impl BaseMap for Map {
@@ -68,6 +69,7 @@ impl Map {
         let mut map = Map {
             tiles: vec![TileType::Wall; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             revealed_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
+            visible_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             rooms: Vec::new(),
             width: MAP_WIDTH,
             height: MAP_HEIGHT,
@@ -137,26 +139,20 @@ impl Map {
             // maps to map.tiles[0])
             for (index, tile) in map.tiles.iter().enumerate() {
                 if map.revealed_tiles[index] {
+                    let glyph;
+                    let mut fg;
                     match tile {
                         TileType::Floor => {
-                            ctx.set(
-                                x,
-                                y,
-                                RGB::from_f32(0.5, 0.5, 0.5),
-                                RGB::from_f32(0., 0., 0.),
-                                rltk::to_cp437('.'),
-                            );
+                            fg = RGB::from_f32(0.5, 0.5, 0.5);
+                            glyph = rltk::to_cp437('.');
                         }
                         TileType::Wall => {
-                            ctx.set(
-                                x,
-                                y,
-                                RGB::from_f32(0.0, 1.0, 0.0),
-                                RGB::from_f32(0., 0., 0.),
-                                rltk::to_cp437('#'),
-                            );
+                            glyph = rltk::to_cp437('#');
+                            fg = RGB::from_f32(0., 1.0, 0.);
                         }
                     }
+                    if !map.visible_tiles[index] { fg = fg.to_greyscale() }
+                    ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
                 }
                 x += 1;
                 if x > MAP_WIDTH - 1 {
