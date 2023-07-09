@@ -1,7 +1,7 @@
 use crate::{GodMode, Map, RunState, Viewshed, VisibilitySystem};
 
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
-use rltk::{Rltk, VirtualKeyCode, Point};
+use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -18,11 +18,11 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
             pos.x = min(MAP_WIDTH - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_HEIGHT - 1, max(0, pos.y + delta_y));
 
+            viewshed.dirty = true;
+
             let mut ppos = gs.ecs.write_resource::<Point>();
             ppos.x = pos.x;
             ppos.y = pos.y;
-
-            viewshed.dirty = true;
         }
     }
 }

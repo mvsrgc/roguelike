@@ -4,7 +4,7 @@ use specs_derive::Component;
 
 #[derive(Component)]
 pub struct Name {
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Component)]

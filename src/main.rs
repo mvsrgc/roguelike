@@ -96,6 +96,26 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
+    game_state
+        .ecs
+        .create_entity()
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
+        .with(Renderable {
+            glyph: rltk::to_cp437('@'),
+            fg: RGB::named(rltk::RED),
+            bg: RGB::named(rltk::BLACK),
+        })
+        .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true,
+        })
+        .build();
+
     let mut rng = RandomNumberGenerator::new();
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
@@ -137,26 +157,6 @@ fn main() -> rltk::BError {
     game_state.ecs.insert(map);
     game_state.ecs.insert(GodMode(false));
     game_state.ecs.insert(Point::new(player_x, player_y));
-
-    game_state
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::RED),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(Player {})
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .build();
 
     rltk::main_loop(context, game_state)
 }

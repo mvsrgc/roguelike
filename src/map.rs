@@ -130,38 +130,36 @@ impl Map {
         let map = ecs.fetch::<Map>();
         let godmode = ecs.fetch::<GodMode>();
 
-        for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
-            let mut x = 0;
-            let mut y = 0;
+        let mut x = 0;
+        let mut y = 0;
 
-            // Use enumerate to get the index of each tile,
-            // the tile index allows us to find if that tile
-            // is True in map.revealed_tiles (since map.revealed_tiles[0]
-            // maps to map.tiles[0])
-            for (index, tile) in map.tiles.iter().enumerate() {
-                if map.revealed_tiles[index] || godmode.0 {
-                    let glyph;
-                    let mut fg;
-                    match tile {
-                        TileType::Floor => {
-                            fg = RGB::from_f32(0.5, 0.5, 0.5);
-                            glyph = rltk::to_cp437('.');
-                        }
-                        TileType::Wall => {
-                            glyph = rltk::to_cp437('#');
-                            fg = RGB::from_f32(0., 1.0, 0.);
-                        }
+        // Use enumerate to get the index of each tile,
+        // the tile index allows us to find if that tile
+        // is True in map.revealed_tiles (since map.revealed_tiles[0]
+        // maps to map.tiles[0])
+        for (index, tile) in map.tiles.iter().enumerate() {
+            if map.revealed_tiles[index] || godmode.0 {
+                let glyph;
+                let mut fg;
+                match tile {
+                    TileType::Floor => {
+                        fg = RGB::from_f32(0.5, 0.5, 0.5);
+                        glyph = rltk::to_cp437('.');
                     }
-                    if !map.visible_tiles[index] {
-                        fg = fg.to_greyscale()
+                    TileType::Wall => {
+                        glyph = rltk::to_cp437('#');
+                        fg = RGB::from_f32(0., 1.0, 0.);
                     }
-                    ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
                 }
-                x += 1;
-                if x > MAP_WIDTH - 1 {
-                    x = 0;
-                    y += 1;
+                if !map.visible_tiles[index] {
+                    fg = fg.to_greyscale()
                 }
+                ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+            }
+            x += 1;
+            if x > MAP_WIDTH - 1 {
+                x = 0;
+                y += 1;
             }
         }
     }
