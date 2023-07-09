@@ -1,5 +1,5 @@
 #![allow(unused)]
-use crate::Player;
+use crate::{Player, GodMode};
 use specs::prelude::*;
 
 use super::{Map, Position, Viewshed};
@@ -14,10 +14,11 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteStorage<'a, Viewshed>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, Player>,
+        Read<'a, GodMode>
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, entities, mut viewshed, pos, player) = data;
+        let (mut map, entities, mut viewshed, pos, player, godmode) = data;
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             if viewshed.dirty {
                 viewshed.dirty = false;
@@ -31,17 +32,24 @@ impl<'a> System<'a> for VisibilitySystem {
                 // If this is the player, reveal what they can see
                 let _p: Option<&Player> = player.get(ent);
                 if let Some(_p) = _p {
-                    // @Cleanup: godmode check could be here and make godmode a resource
                     for t in map.visible_tiles.iter_mut() {
                         *t = false
                     }
                     for vis in viewshed.visible_tiles.iter() {
-                        let idx = map.map_index(vis.x, vis.y);
-                        map.revealed_tiles[idx] = true;
-                        map.visible_tiles[idx] = true;
+                        if !godmode.0 { // Don't add to revealed tiles while in godmode
+                            let idx = map.map_index(vis.x, vis.y);
+                            map.revealed_tiles[idx] = true;
+                            if viewshed.visible_tiles.contains(vis) {
+                                map.visible_tiles[idx] = true;
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        if godmode.0 {
+            map.visible_tiles.fill(true);
         }
     }
 }

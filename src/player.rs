@@ -1,4 +1,4 @@
-use crate::{Map, Viewshed};
+use crate::{Map, Viewshed, GodMode, VisibilitySystem};
 
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{Rltk, VirtualKeyCode};
@@ -10,10 +10,11 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
     let mut players = gs.ecs.write_storage::<Player>();
     let mut viewsheds = gs.ecs.write_storage::<Viewshed>();
     let map = gs.ecs.fetch::<Map>();
+    let godmode = gs.ecs.fetch::<GodMode>();
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_index = map.map_index(pos.x + delta_x, pos.y + delta_y);
-        if map.tiles[destination_index] != TileType::Wall || gs.god_mode {
+        if map.tiles[destination_index] != TileType::Wall || godmode.0 {
             pos.x = min(MAP_WIDTH - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_HEIGHT - 1, max(0, pos.y + delta_y));
 
@@ -23,15 +24,12 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
 }
 
 pub fn toggle_godmode(gs: &mut State) {
-    let mut map = gs.ecs.fetch_mut::<Map>();
+    let mut godmode = gs.ecs.fetch_mut::<GodMode>();
 
-    if !gs.god_mode {
-        gs.revealed_tiles_before_godmode = map.revealed_tiles.clone();
-        map.revealed_tiles.fill(true);
-        gs.god_mode = true;
+    if !godmode.0 {
+        godmode.0 = true;
     } else {
-        gs.god_mode = false;
-        map.revealed_tiles = gs.revealed_tiles_before_godmode.clone();
+        godmode.0 = false;
     }
 }
 

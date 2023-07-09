@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use crate::{Player, Rect, Viewshed};
+use crate::{Player, Rect, Viewshed, GodMode};
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::{Join, World, WorldExt};
 
@@ -128,6 +128,8 @@ impl Map {
         let mut players = ecs.write_storage::<Player>();
         let mut viewsheds = ecs.write_storage::<Viewshed>();
         let map = ecs.fetch::<Map>();
+        let godmode = ecs.fetch::<GodMode>();
+
 
         for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
             let mut x = 0;
@@ -138,7 +140,7 @@ impl Map {
             // is True in map.revealed_tiles (since map.revealed_tiles[0]
             // maps to map.tiles[0])
             for (index, tile) in map.tiles.iter().enumerate() {
-                if map.revealed_tiles[index] {
+                if map.revealed_tiles[index] || godmode.0 {
                     let glyph;
                     let mut fg;
                     match tile {

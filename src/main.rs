@@ -1,5 +1,8 @@
-use rltk::{GameState, Rltk, RGB};
+use rltk::{GameState, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
+
+mod monster_ai_system;
+pub use monster_ai_system::*;
 
 mod player;
 pub use player::*;
@@ -16,13 +19,14 @@ pub use rect::*;
 mod visibility_system;
 pub use visibility_system::*;
 
+#[derive(Default)]
+pub struct GodMode(bool);
+
 const MAP_WIDTH: i32 = 80;
 const MAP_HEIGHT: i32 = 50;
 
 pub struct State {
     ecs: World,
-    god_mode: bool,
-    revealed_tiles_before_godmode: Vec<bool>
 }
 
 impl State {
@@ -30,6 +34,8 @@ impl State {
         //lw.run_now(&self.ecs);
         let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
+        let mut mob = MonsterAI {};
+        mob.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -45,12 +51,17 @@ impl GameState for State {
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
+        let map = self.ecs.fetch::<Map>();
 
         for (pos, render) in (&positions, &renderables).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            let index = map.map_index(pos.x, pos.y);
+            if map.visible_tiles[index] {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            }
         }
 
-        ctx.print(1, 1, format!("God: {}", self.god_mode));
+        let godmode = self.ecs.fetch::<GodMode>();
+        ctx.print(1, 1, format!("God: {}", godmode.0));
     }
 }
 
@@ -59,16 +70,48 @@ fn main() -> rltk::BError {
     let context = RltkBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
         .build()?;
-    let mut game_state = State { ecs: World::new(), god_mode: false, revealed_tiles_before_godmode: vec![] };
+    let mut game_state = State { ecs: World::new() };
 
     game_state.ecs.register::<Position>();
     game_state.ecs.register::<Player>();
     game_state.ecs.register::<Renderable>();
     game_state.ecs.register::<Viewshed>();
+    game_state.ecs.register::<Monster>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
+
+    let mut rng = RandomNumberGenerator::new();
+    for room in map.rooms.iter().skip(1) {
+        let (x, y) = room.center();
+
+        let glyph: rltk::FontCharType;
+        let roll = rng.roll_dice(1, 2);
+        match roll {
+            1 => glyph = rltk::to_cp437('g'),
+            _ => glyph = rltk::to_cp437('o'),
+        }
+        game_state
+            .ecs
+            .create_entity()
+            .with(Position { x, y })
+            .with(Renderable {
+                glyph,
+                fg: RGB::named(rltk::RED),
+                bg: RGB::named(rltk::BLACK),
+            })
+            .with(Viewshed {
+                visible_tiles: Vec::new(),
+                range: 8,
+                dirty: true,
+            })
+            .with(Monster {})
+            .build();
+    }
+
     game_state.ecs.insert(map);
+
+    game_state.ecs.insert(GodMode(false));
 
     game_state
         .ecs
@@ -83,7 +126,11 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
-        .with(Viewshed{ visible_tiles : Vec::new(), range : 8, dirty : true })
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true,
+        })
         .build();
 
     rltk::main_loop(context, game_state)
