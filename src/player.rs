@@ -1,7 +1,7 @@
-use crate::{GodMode, Map, Viewshed, VisibilitySystem};
+use crate::{GodMode, Map, RunState, Viewshed, VisibilitySystem};
 
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
-use rltk::{Rltk, VirtualKeyCode};
+use rltk::{Rltk, VirtualKeyCode, Point};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -18,6 +18,10 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
             pos.x = min(MAP_WIDTH - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_HEIGHT - 1, max(0, pos.y + delta_y));
 
+            let mut ppos = gs.ecs.write_resource::<Point>();
+            ppos.x = pos.x;
+            ppos.y = pos.y;
+
             viewshed.dirty = true;
         }
     }
@@ -33,17 +37,19 @@ pub fn toggle_godmode(gs: &mut State) {
     }
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => {} // Nothing happened
+        None => return RunState::Paused, // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::Left => try_move_player(-1, 0, gs),
             VirtualKeyCode::Right => try_move_player(1, 0, gs),
             VirtualKeyCode::Up => try_move_player(0, -1, gs),
             VirtualKeyCode::Down => try_move_player(0, 1, gs),
             VirtualKeyCode::Key0 => toggle_godmode(gs),
-            _ => {}
+            _ => return RunState::Paused,
         },
     }
+
+    RunState::Running
 }

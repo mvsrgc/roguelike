@@ -40,9 +40,7 @@ impl<'a> System<'a> for VisibilitySystem {
                             // Don't add to revealed tiles while in godmode
                             let idx = map.map_index(vis.x, vis.y);
                             map.revealed_tiles[idx] = true;
-                            if viewshed.visible_tiles.contains(vis) {
-                                map.visible_tiles[idx] = true;
-                            }
+                            map.visible_tiles[idx] = true;
                         }
                     }
                 }
