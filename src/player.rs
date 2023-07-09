@@ -1,4 +1,4 @@
-use crate::{Map, Viewshed, GodMode, VisibilitySystem};
+use crate::{GodMode, Map, Viewshed, VisibilitySystem};
 
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{Rltk, VirtualKeyCode};

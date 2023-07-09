@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use crate::{Player, Rect, Viewshed, GodMode};
+use crate::{GodMode, Player, Rect, Viewshed};
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::{Join, World, WorldExt};
 
@@ -18,7 +18,7 @@ pub struct Map {
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
-    pub visible_tiles: Vec<bool>
+    pub visible_tiles: Vec<bool>,
 }
 
 impl BaseMap for Map {
@@ -98,7 +98,7 @@ impl Map {
             if ok {
                 map.apply_room_to_map(&new_room);
 
-                // 50% chance to make a vertical tunnel first and then a 
+                // 50% chance to make a vertical tunnel first and then a
                 // horizontal tunnel or vice-versa. This is because
                 // if you have two squares that are distant from each other
                 // you have two ways of connecting them (both ways form an L shape).
@@ -130,7 +130,6 @@ impl Map {
         let map = ecs.fetch::<Map>();
         let godmode = ecs.fetch::<GodMode>();
 
-
         for (_player, viewshed) in (&mut players, &mut viewsheds).join() {
             let mut x = 0;
             let mut y = 0;
@@ -153,7 +152,9 @@ impl Map {
                             fg = RGB::from_f32(0., 1.0, 0.);
                         }
                     }
-                    if !map.visible_tiles[index] { fg = fg.to_greyscale() }
+                    if !map.visible_tiles[index] {
+                        fg = fg.to_greyscale()
+                    }
                     ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
                 }
                 x += 1;

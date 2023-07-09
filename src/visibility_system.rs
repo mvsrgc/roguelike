@@ -1,5 +1,5 @@
 #![allow(unused)]
-use crate::{Player, GodMode};
+use crate::{GodMode, Player};
 use specs::prelude::*;
 
 use super::{Map, Position, Viewshed};
@@ -14,7 +14,7 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteStorage<'a, Viewshed>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, Player>,
-        Read<'a, GodMode>
+        Read<'a, GodMode>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -36,7 +36,8 @@ impl<'a> System<'a> for VisibilitySystem {
                         *t = false
                     }
                     for vis in viewshed.visible_tiles.iter() {
-                        if !godmode.0 { // Don't add to revealed tiles while in godmode
+                        if !godmode.0 {
+                            // Don't add to revealed tiles while in godmode
                             let idx = map.map_index(vis.x, vis.y);
                             map.revealed_tiles[idx] = true;
                             if viewshed.visible_tiles.contains(vis) {
