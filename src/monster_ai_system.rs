@@ -26,7 +26,8 @@ impl<'a> System<'a> for MonsterAI {
             if godmode.0 {
                 return;
             }
-            let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            let distance =
+                rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             if distance < 1.5 {
                 console::log(&format!("{} shouts insults", name.name));
                 return;

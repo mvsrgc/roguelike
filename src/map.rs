@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 
 use crate::{GodMode, Player, Rect, Viewshed};
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
-use specs::{Join, World, WorldExt};
+use specs::{Entity, Join, World, WorldExt};
 
 use super::{MAP_HEIGHT, MAP_WIDTH};
 
@@ -20,6 +20,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub tile_content: Vec<Vec<Entity>>,
 }
 
 impl BaseMap for Map {
@@ -34,15 +35,31 @@ impl BaseMap for Map {
         let w = self.width as usize;
 
         // Cardinal directions
-        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
-        if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
-        if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
-        if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
 
-        if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w)+1, 1.45)); }
-        if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w)+1, 1.45)); }
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push(((idx - w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push(((idx - w) + 1, 1.45));
+        }
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push(((idx + w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push(((idx + w) + 1, 1.45));
+        }
 
         exits
     }
@@ -93,8 +110,10 @@ impl Map {
         }
     }
 
-    fn is_exit_valid(&self, x:i32, y:i32) -> bool {
-        if x < 1 || x > self.width-1 || y < 1 || y > self.height-1 { return false; }
+    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
         let idx = self.map_index(x, y);
         !self.blocked[idx]
     }
@@ -105,12 +124,19 @@ impl Map {
         }
     }
 
+    pub fn clear_content_index(&mut self) {
+        for content in self.tile_content.iter_mut() {
+            content.clear();
+        }
+    }
+
     pub fn new_map_rooms_and_corridors() -> Self {
         let mut map = Map {
             tiles: vec![TileType::Wall; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             revealed_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             visible_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             blocked: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],
+            tile_content: vec![Vec::new(); MAP_WIDTH as usize * MAP_HEIGHT as usize],
             rooms: Vec::new(),
             width: MAP_WIDTH,
             height: MAP_HEIGHT,

@@ -92,6 +92,7 @@ fn main() -> rltk::BError {
         runstate: RunState::Running,
     };
 
+    game_state.ecs.register::<CombatStats>();
     game_state.ecs.register::<Position>();
     game_state.ecs.register::<Player>();
     game_state.ecs.register::<Renderable>();
@@ -116,10 +117,19 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Name {
+            name: "Player".to_string(),
+        })
         .with(Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
+        })
+        .with(CombatStats {
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            power: 5,
         })
         .build();
 
@@ -159,6 +169,12 @@ fn main() -> rltk::BError {
                 name: format!("{}, #{}", &name, i),
             })
             .with(BlocksTile {})
+            .with(CombatStats {
+                max_hp: 16,
+                hp: 16,
+                defense: 1,
+                power: 4,
+            })
             .build();
     }
 
