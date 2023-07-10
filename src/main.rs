@@ -1,6 +1,9 @@
 use rltk::{GameState, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 
+mod map_indexing_system;
+pub use map_indexing_system::*;
+
 mod monster_ai_system;
 pub use monster_ai_system::*;
 
@@ -38,11 +41,12 @@ pub struct State {
 
 impl State {
     fn run_systems(&mut self) {
-        //lw.run_now(&self.ecs);
         let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+        let mut mapindex = MapIndexingSystem {};
+        mapindex.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -73,13 +77,15 @@ impl GameState for State {
 
         let godmode = self.ecs.fetch::<GodMode>();
         ctx.print(1, 1, format!("God: {}", godmode.0));
+        ctx.print(1, 2, format!("FPS: {}", ctx.fps));
     }
 }
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_title("Roguelike Tutorial")
+        .with_title("")
+        .with_fps_cap(120.0)
         .build()?;
     let mut game_state = State {
         ecs: World::new(),
@@ -92,6 +98,7 @@ fn main() -> rltk::BError {
     game_state.ecs.register::<Viewshed>();
     game_state.ecs.register::<Monster>();
     game_state.ecs.register::<Name>();
+    game_state.ecs.register::<BlocksTile>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -105,7 +112,7 @@ fn main() -> rltk::BError {
         })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::RED),
+            fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
@@ -151,6 +158,7 @@ fn main() -> rltk::BError {
             .with(Name {
                 name: format!("{}, #{}", &name, i),
             })
+            .with(BlocksTile {})
             .build();
     }
 

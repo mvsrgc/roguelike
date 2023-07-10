@@ -3,7 +3,7 @@ use crate::{GodMode, Map, RunState, Viewshed, VisibilitySystem};
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
-use std::cmp::{max, min};
+use std::{cmp::{max, min}, borrow::BorrowMut};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
     let mut positions = gs.ecs.write_storage::<Position>();
@@ -14,7 +14,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_index = map.map_index(pos.x + delta_x, pos.y + delta_y);
-        if map.tiles[destination_index] != TileType::Wall || godmode.0 {
+        if !map.blocked[destination_index] || godmode.0 {
             pos.x = min(MAP_WIDTH - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_HEIGHT - 1, max(0, pos.y + delta_y));
 
