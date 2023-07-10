@@ -3,7 +3,10 @@ use crate::{GodMode, Map, RunState, Viewshed, VisibilitySystem};
 use super::{Player, Position, State, TileType, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
-use std::{cmp::{max, min}, borrow::BorrowMut};
+use std::{
+    borrow::BorrowMut,
+    cmp::{max, min},
+};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
     let mut positions = gs.ecs.write_storage::<Position>();
@@ -42,10 +45,30 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
         None => return RunState::Paused, // Nothing happened
         Some(key) => match key {
-            VirtualKeyCode::Left => try_move_player(-1, 0, gs),
-            VirtualKeyCode::Right => try_move_player(1, 0, gs),
-            VirtualKeyCode::Up => try_move_player(0, -1, gs),
-            VirtualKeyCode::Down => try_move_player(0, 1, gs),
+            VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
+                try_move_player(-1, 0, gs)
+            }
+
+            VirtualKeyCode::Right | VirtualKeyCode::Numpad6 | VirtualKeyCode::L => {
+                try_move_player(1, 0, gs)
+            }
+
+            VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => {
+                try_move_player(0, -1, gs)
+            }
+
+            VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
+                try_move_player(0, 1, gs)
+            }
+
+            // Diagonals
+            VirtualKeyCode::Numpad9 | VirtualKeyCode::Y => try_move_player(-1, -1, gs),
+
+            VirtualKeyCode::Numpad7 | VirtualKeyCode::U => try_move_player(1, -1, gs),
+
+            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => try_move_player(1, 1, gs),
+
+            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => try_move_player(-1, 1, gs),
             VirtualKeyCode::Key0 => toggle_godmode(gs),
             _ => return RunState::Paused,
         },
