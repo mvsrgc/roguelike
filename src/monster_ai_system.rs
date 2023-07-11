@@ -1,4 +1,4 @@
-use crate::{player, GodMode, Name};
+use crate::{player, GodMode, Name, Player};
 
 use super::{Map, Monster, Position, Viewshed};
 use rltk::{console, field_of_view, Point};
@@ -11,38 +11,68 @@ impl<'a> System<'a> for MonsterAI {
         WriteExpect<'a, Map>,
         ReadExpect<'a, Point>,
         WriteStorage<'a, Viewshed>,
-        ReadStorage<'a, Monster>,
+        WriteStorage<'a, Monster>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         Read<'a, GodMode>,
+        ReadStorage<'a, Player>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, player_pos, mut viewshed, monster, name, mut position, godmode) = data;
+        let (mut map, player_pos, mut viewshed, mut monster, name, mut position, godmode, players) = data;
+
+        let mut num_player_moves = 0;
+        for player in (&players).join() {
+            num_player_moves = player.number_of_moves;
+        }
 
         for (mut viewshed, _monster, name, mut pos) in
-            (&mut viewshed, &monster, &name, &mut position).join()
+            (&mut viewshed, &mut monster, &name, &mut position).join()
         {
-            if godmode.0 {
-                return;
-            }
             let distance =
                 rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+
+            // Monster is close, he can attack
             if distance < 1.5 {
                 console::log(&format!("{} shouts insults", name.name));
+                _monster.last_known_player_pos = Some(*player_pos);
                 return;
             }
-            if viewshed.visible_tiles.contains(&*player_pos) && !godmode.0 {
+
+            // Monster sees the player, he remembers the location of the player
+            if viewshed.visible_tiles.contains(&*player_pos) {
+                _monster.last_known_player_pos = Some(*player_pos);
+            }
+
+            // Monster remembers a location, find a path to it
+            if let Some(last_known_player_pos) =_monster.last_known_player_pos {
                 let path = rltk::a_star_search(
-                    map.map_index(pos.x, pos.y),
-                    map.map_index(player_pos.x, player_pos.y),
+                    map.map_index(pos.x, pos.y) as i32,
+                    map.map_index(last_known_player_pos.x, last_known_player_pos.y) as i32,
                     &mut *map,
                 );
 
                 if path.success && path.steps.len() > 1 {
+                    // Monster will move, so his current location will not be blocked anymore.
+                    let mut idx = map.map_index(pos.x, pos.y);
+                    map.blocked[idx] = false;
+
+                    // New position which is calculated by A*
                     pos.x = path.steps[1] as i32 % map.width;
                     pos.y = path.steps[1] as i32 / map.width;
+
+                    idx = map.map_index(pos.x, pos.y);
+
+                    // The new location the monster moved to is blocked.
+                    map.blocked[idx] = true;
+
                     viewshed.dirty = true;
+
+                    // Monster has reached the last known location of the player, we want
+                    // a new one now so let's forget the old one.
+                    if Point::new(pos.x, pos.y) == last_known_player_pos {
+                        _monster.last_known_player_pos = None;
+                    }
                 }
             }
         }

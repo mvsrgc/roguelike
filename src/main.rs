@@ -116,7 +116,9 @@ fn main() -> rltk::BError {
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
-        .with(Player {})
+        .with(Player {
+            number_of_moves: 0
+        })
         .with(Name {
             name: "Player".to_string(),
         })
@@ -164,7 +166,10 @@ fn main() -> rltk::BError {
                 range: 8,
                 dirty: true,
             })
-            .with(Monster {})
+            .with(Monster {
+                last_known_player_pos: None,
+                last_path: None
+            })
             .with(Name {
                 name: format!("{}, #{}", &name, i),
             })

@@ -39,6 +39,9 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
             let mut ppos = gs.ecs.write_resource::<Point>();
             ppos.x = pos.x;
             ppos.y = pos.y;
+            
+            // Increment move count
+            _player.number_of_moves += 1;
         }
     }
 }

@@ -1,4 +1,6 @@
-use rltk::RGB;
+use std::collections::VecDeque;
+
+use rltk::{RGB, Point, NavigationPath};
 use specs::prelude::*;
 use specs_derive::Component;
 
@@ -19,7 +21,10 @@ pub struct Name {
 }
 
 #[derive(Component)]
-pub struct Monster {}
+pub struct Monster {
+    pub last_known_player_pos: Option<Point>,
+    pub last_path: Option<NavigationPath>
+}
 
 #[derive(Component)]
 pub struct Viewshed {
@@ -42,4 +47,6 @@ pub struct Renderable {
 }
 
 #[derive(Component, Debug)]
-pub struct Player {}
+pub struct Player {
+    pub number_of_moves: i32,
+}
