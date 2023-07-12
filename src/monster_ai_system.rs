@@ -1,7 +1,7 @@
-use crate::{player, GodMode, Name, Player};
+use crate::Name;
 
 use super::{Map, Monster, Position, Viewshed};
-use rltk::{console, field_of_view, Point};
+use rltk::{console, Point};
 use specs::prelude::*;
 
 pub struct MonsterAI {}
@@ -14,17 +14,10 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Monster>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
-        Read<'a, GodMode>,
-        ReadStorage<'a, Player>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, player_pos, mut viewshed, mut monster, name, mut position, godmode, players) = data;
-
-        let mut num_player_moves = 0;
-        for player in (&players).join() {
-            num_player_moves = player.number_of_moves;
-        }
+        let (mut map, player_pos, mut viewshed, mut monster, name, mut position) = data;
 
         for (mut viewshed, _monster, name, mut pos) in
             (&mut viewshed, &mut monster, &name, &mut position).join()
@@ -36,7 +29,10 @@ impl<'a> System<'a> for MonsterAI {
             if distance < 1.5 {
                 console::log(&format!("{} shouts insults", name.name));
                 _monster.last_known_player_pos = Some(*player_pos);
-                return;
+                continue;
+            } else if distance >= 8.0 {
+                _monster.last_known_player_pos = None;
+                continue;
             }
 
             // Monster sees the player, he remembers the location of the player
@@ -67,12 +63,6 @@ impl<'a> System<'a> for MonsterAI {
                     map.blocked[idx] = true;
 
                     viewshed.dirty = true;
-
-                    // Monster has reached the last known location of the player, we want
-                    // a new one now so let's forget the old one.
-                    if Point::new(pos.x, pos.y) == last_known_player_pos {
-                        _monster.last_known_player_pos = None;
-                    }
                 }
             }
         }
