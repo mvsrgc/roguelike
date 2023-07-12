@@ -54,8 +54,8 @@ impl<'a> System<'a> for MonsterAI {
                     map.blocked[idx] = false;
 
                     // New position which is calculated by A*
-                    pos.x = path.steps[1] as i32 % map.width;
-                    pos.y = path.steps[1] as i32 / map.width;
+                    pos.x = path.steps[1] as i32 % map.width as i32;
+                    pos.y = path.steps[1] as i32 / map.width as i32;
 
                     idx = map.map_index(pos.x, pos.y);
 

@@ -15,8 +15,8 @@ pub enum TileType {
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
-    pub width: i32,
-    pub height: i32,
+    pub width: usize,
+    pub height: usize,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
@@ -30,8 +30,8 @@ impl BaseMap for Map {
 
     fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
         let mut exits = rltk::SmallVec::new();
-        let x = idx as i32 % self.width;
-        let y = idx as i32 / self.width;
+        let x = idx as i32 % self.width as i32;
+        let y = idx as i32 / self.width as i32;
         let w = self.width as usize;
 
         // Cardinal directions
@@ -112,7 +112,7 @@ impl Map {
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if x < 1 || x > (self.width - 1) as i32 || y < 1 || y > (self.height - 1) as i32 {
             return false;
         }
         let idx = self.map_index(x, y);
@@ -143,19 +143,19 @@ impl Map {
             height: MAP_HEIGHT,
         };
 
-        const MAX_ROOMS: i32 = 30;
-        const MIN_SIZE: i32 = 6;
-        const MAX_SIZE: i32 = 10;
+        const MAX_ROOMS: usize = 30;
+        const MIN_SIZE: usize = 6;
+        const MAX_SIZE: usize = 10;
 
         let mut rng = RandomNumberGenerator::new();
 
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
-            let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
+            let x = rng.roll_dice(1, (MAP_WIDTH - w - 1) as i32) - 1;
+            let y = rng.roll_dice(1, (MAP_HEIGHT - h - 1) as i32) - 1;
 
-            let new_room = Rect::new(x, y, w, h);
+            let new_room = Rect::new(x, y, w as i32, h as i32);
             let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
