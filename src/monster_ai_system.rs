@@ -41,6 +41,8 @@ impl<'a> System<'a> for MonsterAI {
             }
 
             // Monster remembers a location, find a path to it
+            // @Cleanup Make the monster remember a path so we don't recalculate
+            // unnecessarily.
             if let Some(last_known_player_pos) =_monster.last_known_player_pos {
                 let path = rltk::a_star_search(
                     map.map_index(pos.x, pos.y) as i32,

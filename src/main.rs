@@ -1,6 +1,15 @@
 use rltk::{GameState, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 
+mod gui;
+pub use gui::*;
+
+mod damage_system;
+pub use damage_system::*;
+
+mod melee_combat_system;
+pub use melee_combat_system::*;
+
 mod map_indexing_system;
 pub use map_indexing_system::*;
 
@@ -26,7 +35,7 @@ pub use visibility_system::*;
 pub struct GodMode(bool);
 
 const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 50;
+const MAP_HEIGHT: i32 = 43;
 const MAPCOUNT: i32 = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -44,10 +53,19 @@ impl State {
     fn run_systems(&mut self) {
         let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
+
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
+
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -58,6 +76,7 @@ impl GameState for State {
 
         if self.runstate == RunState::Running {
             self.run_systems();
+            delete_the_dead(&mut self.ecs);
             self.runstate = RunState::Paused;
         } else {
             self.runstate = player_input(self, ctx);
@@ -79,6 +98,8 @@ impl GameState for State {
         let godmode = self.ecs.fetch::<GodMode>();
         ctx.print(1, 1, format!("God: {}", godmode.0));
         ctx.print(1, 2, format!("FPS: {}", ctx.fps));
+
+        draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -93,6 +114,8 @@ fn main() -> rltk::BError {
         runstate: RunState::Running,
     };
 
+    game_state.ecs.register::<SufferDamage>();
+    game_state.ecs.register::<WantsToMelee>();
     game_state.ecs.register::<CombatStats>();
     game_state.ecs.register::<Position>();
     game_state.ecs.register::<Player>();

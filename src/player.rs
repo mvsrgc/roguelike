@@ -1,4 +1,4 @@
-use crate::{CombatStats, GodMode, Map, Name, RunState, Viewshed};
+use crate::{CombatStats, GodMode, Map, Name, RunState, Viewshed, WantsToMelee};
 
 use super::{Player, Position, State, MAP_HEIGHT, MAP_WIDTH};
 use rltk::{console, Point, Rltk, VirtualKeyCode};
@@ -13,8 +13,20 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
     let godmode = gs.ecs.fetch::<GodMode>();
     let combat_stats = gs.ecs.read_storage::<CombatStats>();
     let name = gs.ecs.read_storage::<Name>();
+    let entities = gs.ecs.entities();
+    let mut wants_to_melee = gs.ecs.write_storage::<WantsToMelee>();
 
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
+    for (entity, _player, pos, viewshed) in
+        (&entities, &mut players, &mut positions, &mut viewsheds).join()
+    {
+        if pos.x + delta_x < 1
+            || pos.x + delta_x > map.width - 1
+            || pos.y + delta_y < 1
+            || pos.y + delta_y > map.height - 1
+        {
+            return;
+        }
+
         let destination_index = map.map_index(pos.x + delta_x, pos.y + delta_y);
 
         for potential_target in map.tile_content[destination_index].iter() {
@@ -23,6 +35,14 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
 
             match (target, target_name) {
                 (Some(t), Some(target_name)) => {
+                    wants_to_melee
+                        .insert(
+                            entity,
+                            WantsToMelee {
+                                target: *potential_target,
+                            },
+                        )
+                        .expect("Add target failed.");
                     console::log(&format!("Player attacks {}", target_name.name));
                     return;
                 }
@@ -39,7 +59,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
             let mut ppos = gs.ecs.write_resource::<Point>();
             ppos.x = pos.x;
             ppos.y = pos.y;
-            
+
             // Increment move count
             _player.number_of_moves += 1;
         }
