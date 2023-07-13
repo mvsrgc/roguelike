@@ -25,9 +25,9 @@ pub use visibility_system::*;
 #[derive(Default)]
 pub struct GodMode(bool);
 
-const MAP_WIDTH: usize = 80;
-const MAP_HEIGHT: usize = 50;
-const MAPCOUNT: usize = MAP_HEIGHT * MAP_WIDTH;
+const MAP_WIDTH: i32 = 80;
+const MAP_HEIGHT: i32 = 50;
+const MAPCOUNT: i32 = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {

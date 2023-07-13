@@ -15,8 +15,8 @@ pub enum TileType {
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
-    pub width: usize,
-    pub height: usize,
+    pub width: i32,
+    pub height: i32,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
@@ -143,15 +143,15 @@ impl Map {
             height: MAP_HEIGHT,
         };
 
-        const MAX_ROOMS: usize = 30;
-        const MIN_SIZE: usize = 6;
-        const MAX_SIZE: usize = 10;
+        let max_rooms = 30;
+        let min_size: i32 = 6;
+        let max_size: i32 = 10;
 
         let mut rng = RandomNumberGenerator::new();
 
-        for _ in 0..MAX_ROOMS {
-            let w = rng.range(MIN_SIZE, MAX_SIZE);
-            let h = rng.range(MIN_SIZE, MAX_SIZE);
+        for _ in 0..max_rooms {
+            let w = rng.range(min_size, max_size);
+            let h = rng.range(min_size, max_size);
             let x = rng.roll_dice(1, (MAP_WIDTH - w - 1) as i32) - 1;
             let y = rng.roll_dice(1, (MAP_HEIGHT - h - 1) as i32) - 1;
 
