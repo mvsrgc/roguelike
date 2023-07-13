@@ -34,7 +34,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
             let target_name = name.get(*potential_target);
 
             match (target, target_name) {
-                (Some(t), Some(target_name)) => {
+                (Some(_t), Some(target_name)) => {
                     wants_to_melee
                         .insert(
                             entity,
@@ -43,7 +43,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, gs: &mut State) {
                             },
                         )
                         .expect("Add target failed.");
-                    console::log(&format!("Player attacks {}", target_name.name));
+                    console::log(format!("Player attacks {}", target_name.name));
                     return;
                 }
                 _ => {}

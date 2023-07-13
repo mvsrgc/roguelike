@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 
 use crate::{GodMode, Player, Rect, Viewshed};
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
-use specs::{Entity, Join, World, WorldExt};
+use specs::{Entity, World, WorldExt};
 
 use super::{MAP_HEIGHT, MAP_WIDTH};
 
@@ -25,13 +25,13 @@ pub struct Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        self.tiles[idx] == TileType::Wall
     }
 
     fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
         let mut exits = rltk::SmallVec::new();
-        let x = idx as i32 % self.width as i32;
-        let y = idx as i32 / self.width as i32;
+        let x = idx as i32 % self.width;
+        let y = idx as i32 / self.width;
         let w = self.width as usize;
 
         // Cardinal directions
@@ -97,7 +97,7 @@ impl Map {
         for x in min(x1, x2)..=max(x1, x2) {
             let index = self.map_index(x, y);
             if index > 0 && index < MAP_WIDTH as usize * MAP_HEIGHT as usize {
-                self.tiles[index as usize] = TileType::Floor;
+                self.tiles[index] = TileType::Floor;
             }
         }
     }
@@ -106,13 +106,13 @@ impl Map {
         for y in min(y1, y2)..=max(y1, y2) {
             let index = self.map_index(x, y);
             if index > 0 && index < MAP_WIDTH as usize * MAP_HEIGHT as usize {
-                self.tiles[index as usize] = TileType::Floor;
+                self.tiles[index] = TileType::Floor;
             }
         }
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > (self.width - 1) as i32 || y < 1 || y > (self.height - 1) as i32 {
+        if x < 1 || x > (self.width - 1) || y < 1 || y > (self.height - 1) {
             return false;
         }
         let idx = self.map_index(x, y);
@@ -152,10 +152,10 @@ impl Map {
         for _ in 0..max_rooms {
             let w = rng.range(min_size, max_size);
             let h = rng.range(min_size, max_size);
-            let x = rng.roll_dice(1, (MAP_WIDTH - w - 1) as i32) - 1;
-            let y = rng.roll_dice(1, (MAP_HEIGHT - h - 1) as i32) - 1;
+            let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
+            let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
 
-            let new_room = Rect::new(x, y, w as i32, h as i32);
+            let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
@@ -193,8 +193,8 @@ impl Map {
     }
 
     pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
-        let mut players = ecs.write_storage::<Player>();
-        let mut viewsheds = ecs.write_storage::<Viewshed>();
+        let _players = ecs.write_storage::<Player>();
+        let _viewsheds = ecs.write_storage::<Viewshed>();
         let map = ecs.fetch::<Map>();
         let godmode = ecs.fetch::<GodMode>();
 

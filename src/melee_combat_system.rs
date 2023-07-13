@@ -1,4 +1,4 @@
-use super::{CombatStats, Map, Monster, Name, Position, SufferDamage, Viewshed, WantsToMelee};
+use super::{CombatStats, Name, SufferDamage, WantsToMelee};
 use rltk::console;
 use specs::prelude::*;
 

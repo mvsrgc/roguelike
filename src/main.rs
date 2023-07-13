@@ -128,7 +128,7 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    game_state
+    let player_entity = game_state
         .ecs
         .create_entity()
         .with(Position {
@@ -158,6 +158,8 @@ fn main() -> rltk::BError {
             power: 5,
         })
         .build();
+
+    game_state.ecs.insert(player_entity);
 
     let mut rng = RandomNumberGenerator::new();
     for (i, room) in map.rooms.iter().skip(1).enumerate() {

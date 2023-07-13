@@ -1,5 +1,5 @@
-use super::{CombatStats, Map, Monster, Name, Position, SufferDamage, Viewshed, WantsToMelee};
-use rltk::console;
+use super::{CombatStats, SufferDamage};
+
 use specs::prelude::*;
 
 pub struct DamageSystem {}
