@@ -79,7 +79,7 @@ pub fn toggle_godmode(gs: &mut State) {
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => return RunState::Paused, // Nothing happened
+        None => return RunState::AwaitingInput, // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
                 try_move_player(-1, 0, gs)
@@ -106,9 +106,9 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::Numpad1 | VirtualKeyCode::B => try_move_player(-1, 1, gs),
             VirtualKeyCode::Key0 => toggle_godmode(gs),
-            _ => return RunState::Paused,
+            _ => return RunState::AwaitingInput,
         },
     }
 
-    RunState::Running
+    RunState::PlayerTurn
 }

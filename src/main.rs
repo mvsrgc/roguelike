@@ -36,17 +36,17 @@ pub struct GodMode(bool);
 
 const MAP_WIDTH: i32 = 80;
 const MAP_HEIGHT: i32 = 43;
-const MAPCOUNT: i32 = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    Paused,
-    Running,
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn,
 }
 
 pub struct State {
     ecs: World,
-    runstate: RunState,
 }
 
 impl State {
@@ -74,13 +74,35 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        if self.runstate == RunState::Running {
-            self.run_systems();
-            delete_the_dead(&mut self.ecs);
-            self.runstate = RunState::Paused;
-        } else {
-            self.runstate = player_input(self, ctx);
+        let mut newrunstate;
+        {
+            let runstate = self.ecs.fetch::<RunState>();
+            newrunstate = *runstate;
         }
+
+        match newrunstate {
+            RunState::PreRun => {
+                self.run_systems();
+                newrunstate = RunState::AwaitingInput;
+            }
+            RunState::AwaitingInput => {
+                newrunstate = player_input(self, ctx);
+            }
+            RunState::PlayerTurn => {
+                self.run_systems();
+                newrunstate = RunState::MonsterTurn;
+            }
+            RunState::MonsterTurn => {
+                self.run_systems();
+                newrunstate = RunState::AwaitingInput;
+            }
+        }
+
+        {
+            let mut runwriter = self.ecs.write_resource::<RunState>();
+            *runwriter = newrunstate;
+        }
+        damage_system::delete_the_dead(&mut self.ecs);
 
         Map::draw_map(&self.ecs, ctx);
 
@@ -109,10 +131,7 @@ fn main() -> rltk::BError {
         .with_title("")
         .with_fps_cap(120.0)
         .build()?;
-    let mut game_state = State {
-        ecs: World::new(),
-        runstate: RunState::Running,
-    };
+    let mut game_state = State { ecs: World::new() };
 
     game_state.ecs.register::<SufferDamage>();
     game_state.ecs.register::<WantsToMelee>();
@@ -140,9 +159,7 @@ fn main() -> rltk::BError {
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
-        .with(Player {
-            number_of_moves: 0
-        })
+        .with(Player { number_of_moves: 0 })
         .with(Name {
             name: "Player".to_string(),
         })
@@ -194,7 +211,7 @@ fn main() -> rltk::BError {
             })
             .with(Monster {
                 last_known_player_pos: None,
-                last_path: None
+                last_path: None,
             })
             .with(Name {
                 name: format!("{}, #{}", &name, i),
@@ -212,6 +229,7 @@ fn main() -> rltk::BError {
     game_state.ecs.insert(map);
     game_state.ecs.insert(GodMode(false));
     game_state.ecs.insert(Point::new(player_x, player_y));
+    game_state.ecs.insert(RunState::PreRun);
 
     rltk::main_loop(context, game_state)
 }
