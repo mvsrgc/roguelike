@@ -35,6 +35,7 @@ pub fn delete_the_dead(ecs: &mut World) {
     }
 
     for victim in dead {
-        ecs.delete_entity(victim).expect("Unable to delete entity after death");
+        ecs.delete_entity(victim)
+            .expect("Unable to delete entity after death");
     }
 }
