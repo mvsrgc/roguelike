@@ -1,6 +1,9 @@
 use rltk::{GameState, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 
+mod gamelog;
+pub use gamelog::*;
+
 mod gui;
 pub use gui::*;
 
@@ -127,10 +130,11 @@ impl GameState for State {
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50()
+    let mut context = RltkBuilder::simple80x50()
         .with_title("")
         .with_fps_cap(120.0)
         .build()?;
+    context.with_post_scanlines(true);
     let mut game_state = State { ecs: World::new() };
 
     game_state.ecs.register::<SufferDamage>();
@@ -230,6 +234,9 @@ fn main() -> rltk::BError {
     game_state.ecs.insert(GodMode(false));
     game_state.ecs.insert(Point::new(player_x, player_y));
     game_state.ecs.insert(RunState::PreRun);
+    game_state.ecs.insert(GameLog {
+        entries: vec!["Hello, sailor!".to_string()],
+    });
 
     rltk::main_loop(context, game_state)
 }

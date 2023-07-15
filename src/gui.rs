@@ -1,5 +1,7 @@
+use crate::GameLog;
+
 use super::{CombatStats, Player};
-use rltk::{console, Rltk, RGB};
+use rltk::{Rltk, RGB};
 use specs::prelude::*;
 use specs::{World, WorldExt};
 
@@ -15,6 +17,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
+    let log = ecs.fetch::<GameLog>();
 
     for (_player, stats) in (&players, &combat_stats).join() {
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
@@ -35,5 +38,13 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             RGB::named(rltk::RED),
             RGB::named(rltk::BLACK),
         );
+    }
+
+    let mut y = 44;
+    for entry in log.entries.iter().rev() {
+        if y < 49 {
+            ctx.print(2, y, entry);
+        }
+        y += 1;
     }
 }
