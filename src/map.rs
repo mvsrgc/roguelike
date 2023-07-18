@@ -132,6 +132,7 @@ impl Map {
     }
 
     pub fn new_map_rooms_and_corridors() -> Self {
+        // TODO: Use RNG resource here
         let mut map = Map {
             tiles: vec![TileType::Wall; MAP_WIDTH as usize * MAP_HEIGHT as usize],
             revealed_tiles: vec![false; MAP_WIDTH as usize * MAP_HEIGHT as usize],

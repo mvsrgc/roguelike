@@ -1,4 +1,4 @@
-use rltk::{NavigationPath, Point, RGB};
+use rltk::{Point, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
 
@@ -46,7 +46,6 @@ pub struct Name {
 #[derive(Component)]
 pub struct Monster {
     pub last_known_player_pos: Option<Point>,
-    pub last_path: Option<NavigationPath>,
 }
 
 #[derive(Component)]
