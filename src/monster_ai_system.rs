@@ -38,7 +38,7 @@ impl<'a> System<'a> for MonsterAI {
             return;
         }
 
-        for (entity, mut viewshed, _monster, name, mut pos) in
+        for (entity, viewshed, _monster, name, pos) in
             (&entities, &mut viewshed, &mut monster, &name, &mut position).join()
         {
             let distance =

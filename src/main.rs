@@ -1,4 +1,4 @@
-use rltk::{GameState, Point, RandomNumberGenerator, Rltk, RGB};
+use rltk::{GameState, Point, RandomNumberGenerator, Rltk};
 use specs::prelude::*;
 
 mod spawner;
@@ -40,8 +40,9 @@ pub use visibility_system::*;
 #[derive(Default)]
 pub struct GodMode(bool);
 
-const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 43;
+pub const MAP_WIDTH: i32 = 80;
+pub const MAP_HEIGHT: i32 = 43;
+pub const MAP_COUNT: i32 = MAP_WIDTH * MAP_HEIGHT;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -158,10 +159,9 @@ fn main() -> rltk::BError {
     game_state.ecs.insert(player_entity);
 
     game_state.ecs.insert(RandomNumberGenerator::new());
-    for room in map.rooms.iter().skip(1) {
-        let (x, y) = room.center();
 
-        spawner::random_monster(&mut game_state.ecs, x, y);
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(&mut game_state.ecs, room);
     }
 
     game_state.ecs.insert(map);
