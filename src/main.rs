@@ -141,6 +141,8 @@ fn main() -> rltk::BError {
     context.with_post_scanlines(true);
     let mut game_state = State { ecs: World::new() };
 
+    game_state.ecs.register::<Item>();
+    game_state.ecs.register::<Potion>();
     game_state.ecs.register::<SufferDamage>();
     game_state.ecs.register::<WantsToMelee>();
     game_state.ecs.register::<CombatStats>();

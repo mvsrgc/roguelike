@@ -2,6 +2,14 @@ use rltk::{Point, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
 
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct Potion {
+    pub heal_amount: i32,
+}
+
 #[derive(Component, Debug, Clone)]
 pub struct SufferDamage {
     pub amount: Vec<i32>,
