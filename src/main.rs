@@ -1,6 +1,9 @@
 use rltk::{GameState, Point, RandomNumberGenerator, Rltk};
 use specs::prelude::*;
 
+mod inventory_system;
+pub use inventory_system::*;
+
 mod spawner;
 pub use spawner::*;
 
@@ -11,6 +14,7 @@ mod gui;
 pub use gui::*;
 
 mod damage_system;
+
 pub use damage_system::*;
 
 mod melee_combat_system;
@@ -73,6 +77,9 @@ impl State {
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
 
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -119,12 +126,13 @@ impl GameState for State {
 
         for (pos, render) in (&positions, &renderables).join() {
             let index = map.map_index(pos.x, pos.y);
+
             if map.visible_tiles[index] {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
 
-        let godmode = self.ecs.fetch::<GodMode>();
+        let godmode: specs::shred::Fetch<GodMode> = self.ecs.fetch();
         ctx.print(1, 1, format!("God: {}", godmode.0));
         ctx.print(1, 2, format!("FPS: {}", ctx.fps));
 
@@ -153,6 +161,9 @@ fn main() -> rltk::BError {
     game_state.ecs.register::<Monster>();
     game_state.ecs.register::<Name>();
     game_state.ecs.register::<BlocksTile>();
+    game_state.ecs.register::<WantsToPickupItem>();
+    game_state.ecs.register::<InInventory>();
+    game_state.ecs.register::<LastPathUpdate>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();

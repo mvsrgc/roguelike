@@ -57,9 +57,6 @@ impl<'a> System<'a> for MonsterAI {
                     .expect("Unable to insert attack.");
                 _monster.last_known_player_pos = Some(*player_pos);
                 continue;
-            } else if distance >= 8.0 {
-                _monster.last_known_player_pos = None;
-                continue;
             }
 
             // Monster sees the player, he remembers the location of the player
@@ -67,24 +64,30 @@ impl<'a> System<'a> for MonsterAI {
                 _monster.last_known_player_pos = Some(*player_pos);
             }
 
-            // Monster remembers a location, find a path to it
-            // @Cleanup Make the monster remember a path so we don't recalculate
-            // unnecessarily.
+            // TODO: Monsters close to each other should share a path
+            // instead of recalculating.
             if let Some(last_known_player_pos) = _monster.last_known_player_pos {
-                let path = rltk::a_star_search(
-                    map.map_index(pos.x, pos.y) as i32,
-                    map.map_index(last_known_player_pos.x, last_known_player_pos.y) as i32,
-                    &mut *map,
-                );
+                if _monster.last_pathfind.is_none()
+                    || _monster.last_pathfind.as_mut().unwrap().steps.len() <= 1
+                    || viewshed.visible_tiles.contains(&*player_pos)
+                {
+                    _monster.last_pathfind = Some(rltk::a_star_search(
+                        map.map_index(pos.x, pos.y) as i32,
+                        map.map_index(last_known_player_pos.x, last_known_player_pos.y) as i32,
+                        &mut *map,
+                    ));
+                }
 
+                let path = _monster.last_pathfind.as_mut().unwrap();
                 if path.success && path.steps.len() > 1 {
                     // Monster will move, so his current location will not be blocked anymore.
                     let mut idx = map.map_index(pos.x, pos.y);
                     map.blocked[idx] = false;
 
                     // New position which is calculated by A*
-                    pos.x = path.steps[1] as i32 % map.width;
-                    pos.y = path.steps[1] as i32 / map.width;
+                    let step = path.steps.remove(1);
+                    pos.x = step as i32 % map.width;
+                    pos.y = step as i32 / map.width;
 
                     idx = map.map_index(pos.x, pos.y);
 
@@ -92,6 +95,9 @@ impl<'a> System<'a> for MonsterAI {
                     map.blocked[idx] = true;
 
                     viewshed.dirty = true;
+                    _monster.last_pathfind = Some(path.clone());
+                } else {
+                    _monster.last_pathfind = None;
                 }
             }
         }

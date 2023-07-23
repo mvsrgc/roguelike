@@ -1,6 +1,22 @@
-use rltk::{Point, RGB};
+use rltk::{Point, RGB, NavigationPath};
 use specs::prelude::*;
 use specs_derive::Component;
+
+#[derive(Component, Debug)]
+pub struct LastPathUpdate {
+    pub nb_frames: usize
+}
+
+#[derive(Component, Debug)]
+pub struct InInventory {
+    pub owner: Entity
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity
+}
 
 #[derive(Component, Debug)]
 pub struct Item {}
@@ -54,6 +70,8 @@ pub struct Name {
 #[derive(Component)]
 pub struct Monster {
     pub last_known_player_pos: Option<Point>,
+    pub last_pathfind: Option<NavigationPath>,
+    pub next_step: usize
 }
 
 #[derive(Component)]

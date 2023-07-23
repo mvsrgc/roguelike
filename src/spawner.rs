@@ -1,4 +1,4 @@
-use crate::{Item, Potion, Rect, MAP_WIDTH};
+use crate::{Item, Potion, Rect, MAP_WIDTH, LastPathUpdate};
 
 use super::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, Viewshed};
 use rltk::{RandomNumberGenerator, RGB};
@@ -129,6 +129,8 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         })
         .with(Monster {
             last_known_player_pos: None,
+            last_pathfind: None,
+            next_step: 0
         })
         .with(Name {
             name: name.to_string(),
@@ -140,6 +142,9 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
             defense: 1,
             power: 4,
         })
+        .with(LastPathUpdate {
+            nb_frames: 0
+        })
         .build();
 }
 
@@ -147,8 +152,8 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('P'),
-            fg: RGB::named(rltk::RED),
+            glyph: rltk::to_cp437('¡'),
+            fg: RGB::named(rltk::MAGENTA),
             bg: RGB::named(rltk::BLACK),
         })
         .with(Name {
